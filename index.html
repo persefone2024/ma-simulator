@@ -3,153 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT & AI Budget Crash-Test 2027: Симулятор M&A</title>
+    <title>IT & AI Budget Crash-Test: Симулятор M&A</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/prop-types@15.7.2/prop-types.min.js"></script>
-    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-slate-50 p-4 md:p-8">
-    <div id="root"></div>
-
-    <script type="text/babel">
-        const { useState, useMemo } = React;
-        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ReferenceLine } = window.Recharts;
-
-        function MASimulator() {
-            const [friction, setFriction] = useState(15);
-            const [speed, setSpeed] = useState(5);
-            const [synergy, setSynergy] = useState(6);
-
-            const data = useMemo(() => {
-                const result = [];
-                const baseMargin = 15;
-                for (let t = 0; t <= 36; t++) {
-                    // Ожидаемая синергия растет линейно до 24 месяцев
-                    const expectedSynergy = Math.min((t / 24) * synergy, synergy);
-                    
-                    // Затраты на интеграцию (убывают со временем)
-                    const speedFactor = speed / 100;
-                    const integrationCost = friction * Math.exp(-speedFactor * t);
-                    
-                    const actualMargin = baseMargin + expectedSynergy - integrationCost;
-                    const expectedMargin = baseMargin + expectedSynergy;
-                    
-                    result.push({
-                        month: t,
-                        'Реальная маржинальность': parseFloat(actualMargin.toFixed(2)),
-                        'Ожидаемая маржинальность': parseFloat(expectedMargin.toFixed(2)),
-                        'Базовая маржа': baseMargin
-                    });
-                }
-                return result;
-            }, [friction, speed, synergy]);
-
-            const paybackMonth = data.findIndex(d => d['Реальная маржинальность'] >= 15);
-            const deepPoint = data.reduce((min, p) => p['Реальная маржинальность'] < min['Реальная маржинальность'] ? p : min, data[0]);
-
-            return (
-                <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-                    <div className="bg-slate-900 text-white p-6 border-b border-slate-700">
-                        <h1 className="text-2xl font-bold">M&A Indigestion Simulator</h1>
-                        <p className="text-slate-400 mt-2 text-sm">Интерактивная модель проседания маржинальности (J-Curve) при поглощениях в ИТ</p>
-                    </div>
-                    
-                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {/* Панель управления */}
-                        <div className="space-y-6 md:col-span-1">
-                            <h2 className="text-lg font-semibold text-slate-800 mb-4">Параметры интеграции</h2>
-                            
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700 flex justify-between">
-                                    <span>Архитектурное легаси (Трение)</span>
-                                    <span className="text-slate-500">{friction}%</span>
-                                </label>
-                                <input 
-                                    type="range" min="5" max="25" step="1" 
-                                    value={friction} onChange={(e) => setFriction(Number(e.target.value))}
-                                    className="w-full accent-blue-600"
-                                />
-                                <p className="text-xs text-slate-500">Начальные издержки на сшивание БД и команд</p>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700 flex justify-between">
-                                    <span>Скорость интеграции</span>
-                                    <span className="text-slate-500">{speed}</span>
-                                </label>
-                                <input 
-                                    type="range" min="1" max="15" step="1" 
-                                    value={speed} onChange={(e) => setSpeed(Number(e.target.value))}
-                                    className="w-full accent-blue-600"
-                                />
-                                <p className="text-xs text-slate-500">Темп погашения технологического долга</p>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700 flex justify-between">
-                                    <span>Целевая синергия продуктов</span>
-                                    <span className="text-slate-500">+{synergy}%</span>
-                                </label>
-                                <input 
-                                    type="range" min="2" max="12" step="1" 
-                                    value={synergy} onChange={(e) => setSynergy(Number(e.target.value))}
-                                    className="w-full accent-blue-600"
-                                />
-                                <p className="text-xs text-slate-500">Потенциал роста за счет экосистемы</p>
-                            </div>
-
-                            <div className="mt-8 p-4 bg-red-50 border border-red-100 rounded-lg">
-                                <h3 className="text-sm font-bold text-red-800 mb-2">Бизнес-диагноз:</h3>
-                                <ul className="text-sm text-red-700 space-y-2">
-                                    <li>Глубина падения: <b>{deepPoint['Реальная маржинальность']}%</b></li>
-                                    <li>Точка окупаемости: <b>{paybackMonth > 0 ? `${paybackMonth} мес.` : 'Не достигнута'}</b></li>
-                                </ul>
-                                <p className="text-xs text-slate-600 mt-4 italic">
-                                    "Всю эту просадку в марже вендор переложит на клиента через лицензии."
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* График */}
-                        <div className="md:col-span-2 h-96 min-h-[400px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
-                                        </linearGradient>
-                                        <linearGradient id="colorExpected" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                    <XAxis dataKey="month" tick={{fontSize: 12, fill: '#64748b'}} tickMargin={10} />
-                                    <YAxis domain={['auto', 'auto']} tick={{fontSize: 12, fill: '#64748b'}} />
-                                    <Tooltip 
-                                        contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                                        labelStyle={{color: '#64748b', fontWeight: 'bold', marginBottom: '4px'}}
-                                    />
-                                    <Legend verticalAlign="top" height={36} iconType="circle" />
-                                    
-                                    <ReferenceLine y={15} stroke="#94a3b8" strokeDasharray="3 3" label={{ position: 'insideBottomRight', value: 'База (15%)', fill: '#94a3b8', fontSize: 12 }} />
-                                    
-                                    <Area type="monotone" name="Реальная маржа (с учетом костов)" dataKey="Реальная маржинальность" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorActual)" />
-                                    <Area type="monotone" name="Обещанная маржа (Витрина)" dataKey="Ожидаемая маржинальность" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" fillOpacity={1} fill="url(#colorExpected)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
+    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+        <div class="bg-slate-900 text-white p-6 border-b border-slate-700">
+            <h1 class="text-2xl font-bold">M&A Indigestion Simulator</h1>
+            <p class="text-slate-400 mt-2 text-sm">Интерактивная модель проседания маржинальности (J-Curve) при поглощениях в ИТ</p>
+        </div>
+        
+        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Панель управления -->
+            <div class="space-y-6 md:col-span-1">
+                <h2 class="text-lg font-semibold text-slate-800 mb-4">Параметры интеграции</h2>
+                
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-slate-700 flex justify-between">
+                        <span>Архитектурное легаси (Трение)</span>
+                        <span id="friction-val" class="text-slate-500">15%</span>
+                    </label>
+                    <input id="friction" type="range" min="5" max="25" step="1" value="15" class="w-full accent-blue-600">
+                    <p class="text-xs text-slate-500">Начальные издержки на сшивание БД и команд</p>
                 </div>
-            );
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-slate-700 flex justify-between">
+                        <span>Скорость интеграции</span>
+                        <span id="speed-val" class="text-slate-500">5</span>
+                    </label>
+                    <input id="speed" type="range" min="1" max="15" step="1" value="5" class="w-full accent-blue-600">
+                    <p class="text-xs text-slate-500">Темп погашения технологического долга</p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-slate-700 flex justify-between">
+                        <span>Целевая синергия продуктов</span>
+                        <span id="synergy-val" class="text-slate-500">+6%</span>
+                    </label>
+                    <input id="synergy" type="range" min="2" max="12" step="1" value="6" class="w-full accent-blue-600">
+                    <p class="text-xs text-slate-500">Потенциал роста за счет экосистемы</p>
+                </div>
+
+                <div class="mt-8 p-4 bg-red-50 border border-red-100 rounded-lg">
+                    <h3 class="text-sm font-bold text-red-800 mb-2">Бизнес-диагноз:</h3>
+                    <ul class="text-sm text-red-700 space-y-2">
+                        <li>Глубина падения: <b id="deep-point">0%</b></li>
+                        <li>Точка окупаемости: <b id="payback-month">Не достигнута</b></li>
+                    </ul>
+                    <p class="text-xs text-slate-600 mt-4 italic">
+                        "Всю эту просадку в марже вендор переложит на клиента через лицензии."
+                    </p>
+                </div>
+            </div>
+
+            <!-- График -->
+            <div class="md:col-span-2 relative h-96 min-h-[400px]">
+                <canvas id="maChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('maChart').getContext('2d');
+        
+        let frictionInput = document.getElementById('friction');
+        let speedInput = document.getElementById('speed');
+        let synergyInput = document.getElementById('synergy');
+        
+        let frictionVal = document.getElementById('friction-val');
+        let speedVal = document.getElementById('speed-val');
+        let synergyVal = document.getElementById('synergy-val');
+        
+        let deepPointLabel = document.getElementById('deep-point');
+        let paybackLabel = document.getElementById('payback-month');
+
+        const baseMargin = 15;
+        const labels = Array.from({length: 37}, (_, i) => i);
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Реальная маржа (с учетом костов)',
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        data: []
+                    },
+                    {
+                        label: 'Обещанная маржа (Витрина)',
+                        borderColor: '#3b82f6',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.4,
+                        data: []
+                    },
+                    {
+                        label: 'База (15%)',
+                        borderColor: '#94a3b8',
+                        borderDash: [3, 3],
+                        borderWidth: 1,
+                        fill: false,
+                        pointRadius: 0,
+                        data: Array(37).fill(15)
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Месяцы после поглощения'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        function updateData() {
+            const friction = parseFloat(frictionInput.value);
+            const speed = parseFloat(speedInput.value);
+            const synergy = parseFloat(synergyInput.value);
+
+            frictionVal.textContent = friction + '%';
+            speedVal.textContent = speed;
+            synergyVal.textContent = '+' + synergy + '%';
+
+            let actualData = [];
+            let expectedData = [];
+            
+            let minMargin = 100;
+            let paybackMonth = -1;
+
+            for (let t = 0; t <= 36; t++) {
+                let expectedSynergy = Math.min((t / 24) * synergy, synergy);
+                let speedFactor = speed / 100;
+                let integrationCost = friction * Math.exp(-speedFactor * t);
+                
+                let actualMargin = baseMargin + expectedSynergy - integrationCost;
+                let expectedMargin = baseMargin + expectedSynergy;
+                
+                actualData.push(actualMargin);
+                expectedData.push(expectedMargin);
+
+                if (actualMargin < minMargin) minMargin = actualMargin;
+                if (paybackMonth === -1 && t > 0 && actualMargin >= baseMargin) {
+                    paybackMonth = t;
+                }
+            }
+
+            chart.data.datasets[0].data = actualData;
+            chart.data.datasets[1].data = expectedData;
+            chart.update();
+
+            deepPointLabel.textContent = minMargin.toFixed(2) + '%';
+            paybackLabel.textContent = paybackMonth > 0 ? paybackMonth + ' мес.' : 'Не достигнута';
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<MASimulator />);
+        frictionInput.addEventListener('input', updateData);
+        speedInput.addEventListener('input', updateData);
+        synergyInput.addEventListener('input', updateData);
+
+        updateData();
     </script>
 </body>
 </html>
