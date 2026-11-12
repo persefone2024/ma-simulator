@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT & AI Budget Crash-Test 2027: Симулятор M&A</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.7.2/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-50 p-4 md:p-8">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ReferenceLine } = window.Recharts;
+
+        function MASimulator() {
+            const [friction, setFriction] = useState(15);
+            const [speed, setSpeed] = useState(5);
+            const [synergy, setSynergy] = useState(6);
+
+            const data = useMemo(() => {
+                const result = [];
+                const baseMargin = 15;
+                for (let t = 0; t <= 36; t++) {
+                    // Ожидаемая синергия растет линейно до 24 месяцев
+                    const expectedSynergy = Math.min((t / 24) * synergy, synergy);
+                    
+                    // Затраты на интеграцию (убывают со временем)
+                    const speedFactor = speed / 100;
+                    const integrationCost = friction * Math.exp(-speedFactor * t);
+                    
+                    const actualMargin = baseMargin + expectedSynergy - integrationCost;
+                    const expectedMargin = baseMargin + expectedSynergy;
+                    
+                    result.push({
+                        month: t,
+                        'Реальная маржинальность': parseFloat(actualMargin.toFixed(2)),
+                        'Ожидаемая маржинальность': parseFloat(expectedMargin.toFixed(2)),
+                        'Базовая маржа': baseMargin
+                    });
+                }
+                return result;
+            }, [friction, speed, synergy]);
+
+            const paybackMonth = data.findIndex(d => d['Реальная маржинальность'] >= 15);
+            const deepPoint = data.reduce((min, p) => p['Реальная маржинальность'] < min['Реальная маржинальность'] ? p : min, data[0]);
+
+            return (
+                <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                    <div className="bg-slate-900 text-white p-6 border-b border-slate-700">
+                        <h1 className="text-2xl font-bold">M&A Indigestion Simulator</h1>
+                        <p className="text-slate-400 mt-2 text-sm">Интерактивная модель проседания маржинальности (J-Curve) при поглощениях в ИТ</p>
+                    </div>
+                    
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Панель управления */}
+                        <div className="space-y-6 md:col-span-1">
+                            <h2 className="text-lg font-semibold text-slate-800 mb-4">Параметры интеграции</h2>
+                            
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-700 flex justify-between">
+                                    <span>Архитектурное легаси (Трение)</span>
+                                    <span className="text-slate-500">{friction}%</span>
+                                </label>
+                                <input 
+                                    type="range" min="5" max="25" step="1" 
+                                    value={friction} onChange={(e) => setFriction(Number(e.target.value))}
+                                    className="w-full accent-blue-600"
+                                />
+                                <p className="text-xs text-slate-500">Начальные издержки на сшивание БД и команд</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-700 flex justify-between">
+                                    <span>Скорость интеграции</span>
+                                    <span className="text-slate-500">{speed}</span>
+                                </label>
+                                <input 
+                                    type="range" min="1" max="15" step="1" 
+                                    value={speed} onChange={(e) => setSpeed(Number(e.target.value))}
+                                    className="w-full accent-blue-600"
+                                />
+                                <p className="text-xs text-slate-500">Темп погашения технологического долга</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-700 flex justify-between">
+                                    <span>Целевая синергия продуктов</span>
+                                    <span className="text-slate-500">+{synergy}%</span>
+                                </label>
+                                <input 
+                                    type="range" min="2" max="12" step="1" 
+                                    value={synergy} onChange={(e) => setSynergy(Number(e.target.value))}
+                                    className="w-full accent-blue-600"
+                                />
+                                <p className="text-xs text-slate-500">Потенциал роста за счет экосистемы</p>
+                            </div>
+
+                            <div className="mt-8 p-4 bg-red-50 border border-red-100 rounded-lg">
+                                <h3 className="text-sm font-bold text-red-800 mb-2">Бизнес-диагноз:</h3>
+                                <ul className="text-sm text-red-700 space-y-2">
+                                    <li>Глубина падения: <b>{deepPoint['Реальная маржинальность']}%</b></li>
+                                    <li>Точка окупаемости: <b>{paybackMonth > 0 ? `${paybackMonth} мес.` : 'Не достигнута'}</b></li>
+                                </ul>
+                                <p className="text-xs text-slate-600 mt-4 italic">
+                                    "Всю эту просадку в марже вендор переложит на клиента через лицензии."
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* График */}
+                        <div className="md:col-span-2 h-96 min-h-[400px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
+                                        </linearGradient>
+                                        <linearGradient id="colorExpected" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                    <XAxis dataKey="month" tick={{fontSize: 12, fill: '#64748b'}} tickMargin={10} />
+                                    <YAxis domain={['auto', 'auto']} tick={{fontSize: 12, fill: '#64748b'}} />
+                                    <Tooltip 
+                                        contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                                        labelStyle={{color: '#64748b', fontWeight: 'bold', marginBottom: '4px'}}
+                                    />
+                                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                                    
+                                    <ReferenceLine y={15} stroke="#94a3b8" strokeDasharray="3 3" label={{ position: 'insideBottomRight', value: 'База (15%)', fill: '#94a3b8', fontSize: 12 }} />
+                                    
+                                    <Area type="monotone" name="Реальная маржа (с учетом костов)" dataKey="Реальная маржинальность" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorActual)" />
+                                    <Area type="monotone" name="Обещанная маржа (Витрина)" dataKey="Ожидаемая маржинальность" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" fillOpacity={1} fill="url(#colorExpected)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<MASimulator />);
+    </script>
+</body>
+</html>
